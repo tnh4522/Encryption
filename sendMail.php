@@ -1,49 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css">
+    <title>Encryption Send Email</title>
 </head>
 <body>
 <?php
 session_start();
 use phpseclib\Crypt\RSA;
 require 'vendor/autoload.php';
-
-$message = "";
+$notification = '';
+$encryptedMessage = '';
 if(isset($_POST['submit'])) {
-    $recipientEmail = $_POST['recipient'];
+    $_SESSION['recipient'] = $_POST['recipient'];
+    $_SESSION['subject'] = $_POST['subject'];
     $message = $_POST['message'];
-    if($recipientEmail == "" || $message == "") {
-        $message = "Email hoặc Message không được để trống!";
-    } else {
-        try {
-            $publicKey = file_get_contents('public_key.pem');
-            $rsa = new RSA();
-            $rsa->loadKey($publicKey);
-            $encryptedMessage = $rsa->encrypt($message);
-            $_SESSION['encrypted_message'] = base64_encode($encryptedMessage);
-            echo "Nội dung tin nhắn trước khi mã hóa: " . $message . "<br>";
-            echo "Nội dung tin nhắn sau khi mã hóa: " . $encryptedMessage . "<br>";
-            exit;
-        }
-        catch (Exception $e) {
-            $message = $e->getMessage();
-        }
-    }
+    $publicKey = file_get_contents('public_key.pem');
+    $rsa = new RSA();
+    $rsa->loadKey($publicKey);
+    $encryptedMessage = $rsa->encrypt($message);
+    $_SESSION['encrypted_message'] = base64_encode($encryptedMessage);
+    $notification = 'Email Encrypted And Sent';
 }
 ?>
-<h1>Send Encrypted Email</h1>
-<form action="sendMail.php" method="post">
-    <label for="recipient">Recipient Email:</label>
-    <input type="email" name="recipient" required><br><br>
-    <label for="message">Message:</label>
-    <textarea name="message" rows="4" cols="50" required></textarea><br><br>
-    <p style="color: red"><?php echo $message; ?></p>
-    <input type="submit" name="submit" value="Send Email">
-</form>
+<div class="container">
+    <h1>Send Encrypted Email</h1>
+    <form action="" method="post">
+        <label for="recipient">To</label>
+        <input type="text" id="recipient" name="recipient" placeholder="Email.." >
+        <label for="subject">Subject</label>
+        <input type="text" id="subject" name="subject" placeholder="Write subject..">
+        <label for="message">Mail</label>
+        <textarea id="message" name="message" placeholder="Write something.." style="height:200px"></textarea>
+        <label for="encryption">Mail Encryption</label>
+        <textarea id="encryption" name="encryption" style="height:200px" readonly><?php echo $encryptedMessage; ?></textarea>
+        <input type="submit" name="submit" value="Send Email">
+        <p class="notification"><?php echo $notification ?></p>
+    </form>
+</div>
 </body>
 </html>
